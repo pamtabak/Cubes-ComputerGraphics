@@ -2,6 +2,8 @@ var scene, camera, renderer;
 var cube;
 var raycaster;
 var mouse = new THREE.Vector2(), INTERSECTED;
+var mouseDown = false;
+var cubes = [];
 
 init();
 render();
@@ -35,6 +37,8 @@ function init(){
 	// To avoid this, we simply move the camera out a bit.
 	camera.position.z = 500;
 
+	cubes.push(cube);
+
 	document.addEventListener( 'mousedown' , onMouseLeftButtonDown, false );
 
 	window.addEventListener( 'resize', onWindowResize, false );
@@ -56,14 +60,6 @@ function onWindowResize() {
 }
 
 function createNewCubes(){
-
-	// First: we need to check wether the new cube will intersect with any cube that is already drawn
-	var intersects = raycaster.intersectObjects( scene.children ); // checks if user clicked on any cube
-	if (intersects.length > 0){
-		console.log("intersects");
-		return;
-	}
-
 	var event = window.event;
     var x = event.clientX;
     var y = event.clientY;
@@ -83,6 +79,8 @@ function createNewCubes(){
 
 	cube.position.set(cameraPosition.x,cameraPosition.y,cameraPosition.z);
 	scene.add( cube ); 
+
+	cubes.push(cube);
 }
 
 function onMouseLeftButtonDown ( event ) {
@@ -94,5 +92,29 @@ function onMouseLeftButtonDown ( event ) {
 
 	raycaster.setFromCamera( mouse, camera );
 
-	createNewCubes();
+	// First: we need to check wether the new cube will intersect with any cube that is already drawn
+	var intersects = raycaster.intersectObjects( scene.children ); // checks if user clicked on any cube
+	if (intersects.length > 0){
+		var clickedCube = intersects[0];
+		for (var i = 0; i < cubes.length; i++){
+			if (cubes[i] === clickedCube.object){
+				// Select this cube
+				console.log(cubes[i]);
+
+				// Draw lines around selected cube
+
+				// var material = new THREE.LineBasicMaterial({ color: 0x0000ff});
+				// var geometry = new THREE.Geometry();
+    // 			geometry.vertices.push(new THREE.Vector3(cubes[i].point.x, cubes[i].point.y, cubes[i].point.z));
+    // 			geometry.vertices.push(new THREE.Vector3(cubes[i].object.point.x, cubes[i].point.y + cubes[i].geometry.parameters.heigth, cubes[i].point.z));
+    // 			var line = new THREE.Line(geometry, material);
+    // 			scene.add(line);
+			}		
+		}
+		
+		// mousedown = true; // we probably want to translate cube around
+	}
+	else {
+		createNewCubes();
+	}
 }

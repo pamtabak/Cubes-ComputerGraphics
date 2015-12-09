@@ -5,6 +5,8 @@ var mouse = new THREE.Vector2(), INTERSECTED;
 var mouseDown = false;
 var cubes = [];
 var selectedCube = null;
+var clickedCube = null;
+var lastClickedCube = null;
 
 init();
 render();
@@ -98,20 +100,47 @@ function onMouseLeftButtonDown ( event ) {
 
 	// First: we need to check wether the new cube will intersect with any cube that is already drawn
 	var intersects = raycaster.intersectObjects( scene.children ); // checks if user clicked on any cube
-	if (intersects.length > 0){
-		var clickedCube = intersects[0];
 
-		console.log(selectedCube);
-		if (selectedCube === null){
-			//Draw lines around selected cube	
-			selectedCube = new THREE.Mesh( new THREE.BoxGeometry(110,110,110,1,1), new THREE.MeshLambertMaterial({color : 0xffffff, transparent :true, opacity: 0.4}));
+	if (intersects.length > 0){
+		for (var i = 0; i < cubes.length; i++){
+			for (var j = 0; j < intersects.length; j++){
+				if (cubes[i] === intersects[j].object){
+					console.log("oi");
+					clickedCube = cubes[i];
+				}
+			}
 		}
-		else{
-			scene.remove(selectedCube);
+
+		if (lastClickedCube !== null && clickedCube !== null){	
+			console.log("not null");
+			console.log(clickedCube === lastClickedCube);		
+			if (clickedCube === lastClickedCube){
+				console.log("deleting selected cube");
+				scene.remove(selectedCube);
+				selectedCube = null;
+				clickedCube = null;
+				lastClickedCube = null;				
+			}
 		}
-        
-        scene.add(selectedCube);
-        selectedCube.position.set(clickedCube.object.position.x, clickedCube.object.position.y, clickedCube.object.position.z);
+	 	
+	 	if (clickedCube !== null)
+		{
+			if (selectedCube === null){
+				console.log("selected cube === null");
+				//Draw lines around selected cube	
+				selectedCube = new THREE.Mesh( new THREE.BoxGeometry(110,110,110,1,1), new THREE.MeshLambertMaterial({color : 0xffffff, transparent :true, opacity: 0.4}));
+			}
+			else {
+				scene.remove(selectedCube);
+			}
+	       
+	        selectedCube.position.set(clickedCube.position.x, clickedCube.position.y, clickedCube.position.z);
+	        scene.add(selectedCube);
+		}
+
+		// Setting current clicked cube as last one to be clicked
+		lastClickedCube = clickedCube;
+		
 		// mousedown = true; // we probably want to translate cube around
 	}
 	else {

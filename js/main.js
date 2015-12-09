@@ -4,6 +4,7 @@ var raycaster;
 var mouse = new THREE.Vector2(), INTERSECTED;
 var mouseDown = false;
 var cubes = [];
+var selectedCube = null;
 
 init();
 render();
@@ -11,8 +12,8 @@ render();
 function init(){
  	scene = new THREE.Scene(); // set up the scene
 
- 	camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 1000 );
- 	
+ 	//camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 1000 );
+ 	camera = new THREE.PerspectiveCamera (45, window.innerWidth/window.innerHeight, 1, 1000);
  	// Set up the rendered
  	renderer = new THREE.WebGLRenderer();
  	renderer.setClearColor(0xeeeeee);
@@ -22,20 +23,23 @@ function init(){
 	raycaster = new THREE.Raycaster(); // initializing raycaster
 
  	// Ilumination
+ 	this.scene.add(new THREE.AmbientLight(0x44444));
  	var light = new THREE.DirectionalLight( 0xffffff, 1 );
-	light.position.set( 1, 1, 1 ).normalize();
-	scene.add( light );
+	light.position.set( 200, 200, 1000 ).normalize();
+	// scene.add( light );
+	camera.add(light);
+	camera.add(light.target);
 
 	// Draw Initial Cube
 	var geometry = new THREE.BoxGeometry( 100, 100, 100 ); // object that contains all the points (vertices) and fill (faces) of the cube. 
-	var material = new THREE.MeshBasicMaterial( { color: 0xff56c0 } );
+	var material = new THREE.MeshLambertMaterial( { color: 0xff56c0 } );
 	cube = new THREE.Mesh( geometry, material );
 	
 	scene.add( cube ); 
 	// By default, when we call scene.add(), the thing we add will be added to the coordinates (0,0,0). 
 	// This would cause both the camera and the cube to be inside each other. 
 	// To avoid this, we simply move the camera out a bit.
-	camera.position.z = 500;
+	camera.position.z = 1000;
 
 	cubes.push(cube);
 
@@ -96,22 +100,18 @@ function onMouseLeftButtonDown ( event ) {
 	var intersects = raycaster.intersectObjects( scene.children ); // checks if user clicked on any cube
 	if (intersects.length > 0){
 		var clickedCube = intersects[0];
-		for (var i = 0; i < cubes.length; i++){
-			if (cubes[i] === clickedCube.object){
-				// Select this cube
-				console.log(cubes[i]);
 
-				// Draw lines around selected cube
-
-				// var material = new THREE.LineBasicMaterial({ color: 0x0000ff});
-				// var geometry = new THREE.Geometry();
-    // 			geometry.vertices.push(new THREE.Vector3(cubes[i].point.x, cubes[i].point.y, cubes[i].point.z));
-    // 			geometry.vertices.push(new THREE.Vector3(cubes[i].object.point.x, cubes[i].point.y + cubes[i].geometry.parameters.heigth, cubes[i].point.z));
-    // 			var line = new THREE.Line(geometry, material);
-    // 			scene.add(line);
-			}		
+		console.log(selectedCube);
+		if (selectedCube === null){
+			//Draw lines around selected cube	
+			selectedCube = new THREE.Mesh( new THREE.BoxGeometry(110,110,110,1,1), new THREE.MeshLambertMaterial({color : 0xffffff, transparent :true, opacity: 0.4}));
 		}
-		
+		else{
+			scene.remove(selectedCube);
+		}
+        
+        scene.add(selectedCube);
+        selectedCube.position.set(clickedCube.object.position.x, clickedCube.object.position.y, clickedCube.object.position.z);
 		// mousedown = true; // we probably want to translate cube around
 	}
 	else {

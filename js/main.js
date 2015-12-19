@@ -3,10 +3,10 @@ var cube;
 var raycaster;
 var mouse = new THREE.Vector2(), INTERSECTED;
 var mouseDown = false;
-var cubes = [];
-var selectedCube = null;
-var clickedCube = null;
-var lastClickedCube = null;
+var cubes = []; // cubes currently on screen
+var selectedCube = null; // selection cube (shows which cube is selected)
+var clickedCube = null; 
+var mousePressed = false; // boolean to see if mouse is pressed
 
 init();
 render();
@@ -47,6 +47,25 @@ function init(){
 
 	document.addEventListener( 'mousedown' , onMouseLeftButtonDown, false );
 
+	document.addEventListener('mouseup', function () {
+        //change global variables for object selection
+        mousePressed = false;
+    });
+
+	document.addEventListener("keydown", function onKeyDown (event) {
+
+		if (event.which == 68 && selectedCube != null && clickedCube != null) {
+			// delete cube
+			scene.remove(clickedCube);
+			scene.remove(selectedCube);
+			cubes.splice(cubes.indexOf(clickedCube), 1);
+			clickedCube = null;
+			selectedCube = null;
+		}
+	}, false);
+
+	document.addEventListener( 'mousemove' ,  onMouseLeftButtonPressed, false );
+
 	window.addEventListener( 'resize', onWindowResize, false );
 }
 
@@ -66,31 +85,41 @@ function onWindowResize() {
 }
 
 function createNewCubes(){
-	var event = window.event;
-    var x = event.clientX;
-    var y = event.clientY;
-
-	// drawing a new cube
-	console.log("drawing new cube");
-	var geometry = new THREE.BoxGeometry( 100, 100, 100 ); // object that contains all the points (vertices) and fill (faces) of the cube. 
-	var material = new THREE.MeshBasicMaterial( { color: Math.random() * 0xff56c0 } ); // selecting cube color
-	cube         = new THREE.Mesh( geometry, material ); // initializing cube
-
-	var position = new THREE.Vector3((x/window.innerWidth)*2 -1,-(y/window.innerHeight)*2 +1, 0); // creating vector with cube`s coordinates
-	position.unproject( camera ); // projects camera on vector plan
 	
-	var dir            = position.sub(camera.position).normalize();
-    var distance       = - camera.position.z/dir.z;
-    var cameraPosition = camera.position.clone().add(dir.multiplyScalar(distance));
+	if (selectedCube == null){
+		var event = window.event;
+	    var x = event.clientX;
+	    var y = event.clientY;
 
-	cube.position.set(cameraPosition.x,cameraPosition.y,cameraPosition.z);
-	scene.add( cube ); 
+		// drawing a new cube
+		console.log("drawing new cube");
+		var geometry = new THREE.BoxGeometry( 100, 100, 100 ); // object that contains all the points (vertices) and fill (faces) of the cube. 
+		var material = new THREE.MeshBasicMaterial( { color: Math.random() * 0xff56c0 } ); // selecting cube color
+		cube         = new THREE.Mesh( geometry, material ); // initializing cube
 
-	cubes.push(cube);
+		var position = new THREE.Vector3((x/window.innerWidth)*2 -1,-(y/window.innerHeight)*2 +1, 0); // creating vector with cube`s coordinates
+		position.unproject( camera ); // projects camera on vector plan
+		
+		var dir            = position.sub(camera.position).normalize();
+	    var distance       = - camera.position.z/dir.z;
+	    var cameraPosition = camera.position.clone().add(dir.multiplyScalar(distance));
+
+		cube.position.set(cameraPosition.x,cameraPosition.y,cameraPosition.z);
+		scene.add( cube ); 
+
+		cubes.push(cube);
+	}
+	else {
+		scene.remove(selectedCube);
+		selectedCube = null;
+		clickedCube = null;
+	}
 }
 
 function onMouseLeftButtonDown ( event ) {
-	console.log("left mouse button clicked");
+	
+	mousePressed = true; // in order to translate cube around
+	
 	event.preventDefault();
 
 	mouse.x =   ( event.clientX / renderer.domElement.clientWidth ) * 2 - 1;
@@ -111,17 +140,17 @@ function onMouseLeftButtonDown ( event ) {
 			}
 		}
 
-		if (lastClickedCube !== null && clickedCube !== null){	
-			console.log("not null");
-			console.log(clickedCube === lastClickedCube);		
-			if (clickedCube === lastClickedCube){
-				console.log("deleting selected cube");
-				scene.remove(selectedCube);
-				selectedCube = null;
-				clickedCube = null;
-				lastClickedCube = null;				
-			}
-		}
+		// if (lastClickedCube !== null && clickedCube !== null){	
+		// 	console.log("not null");
+		// 	console.log(clickedCube === lastClickedCube);		
+		// 	if (clickedCube === lastClickedCube){
+		// 		console.log("deleting selected cube");
+		// 		scene.remove(selectedCube);
+		// 		selectedCube = null;
+		// 		clickedCube = null;
+		// 		lastClickedCube = null;				
+		// 	}
+		// }
 	 	
 	 	if (clickedCube !== null)
 		{
@@ -139,11 +168,37 @@ function onMouseLeftButtonDown ( event ) {
 		}
 
 		// Setting current clicked cube as last one to be clicked
-		lastClickedCube = clickedCube;
-		
-		// mousedown = true; // we probably want to translate cube around
+		//lastClickedCube = clickedCube;
 	}
 	else {
 		createNewCubes();
+	}
+}
+
+function onMouseLeftButtonPressed (event){
+	if (mousePressed == true && clickedCube != null && selectedCube != null){
+		
+		event.preventDefault();
+
+		scene.remove(selectedCube);
+		scene.remove(clickedCube);
+
+		// translate cube
+		mouse.x = (event.clientX / renderer.domElement.width) * 2 - 1;
+        mouse.y = -(event.clientY / renderer.domElement.height) * 2 + 1;
+
+        // raycaster.setFromCamera( mouse, camera );
+
+        var position = new THREE.Vector3((event.clientX/window.innerWidth)*2 -1,-(event.clientY/window.innerHeight)*2 +1, 0); // creating vector with cube`s coordinates
+		position.unproject( camera ); // projects camera on vector plan
+		
+		var dir            = position.sub(camera.position).normalize();
+	    var distance       = - camera.position.z/dir.z;
+	    var cameraPosition = camera.position.clone().add(dir.multiplyScalar(distance));
+
+        clickedCube.position.set(cameraPosition.x,cameraPosition.y, cameraPosition.z);
+		selectedCube.position.set(cameraPosition.x,cameraPosition.y, cameraPosition.z);
+		scene.add(selectedCube);
+		scene.add(clickedCube);
 	}
 }

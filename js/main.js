@@ -7,6 +7,8 @@ var cubes = []; // cubes currently on screen
 var selectedCube = null; // selection cube (shows which cube is selected)
 var clickedCube = null; 
 var mousePressed = false; // boolean to see if mouse is pressed
+var shiftPressed = false; // boolean to see if shift key is being pressed
+var sphere;
 
 init();
 render();
@@ -38,6 +40,7 @@ function init(){
 	cube = new THREE.Mesh( geometry, material );
 	
 	scene.add( cube ); 
+
 	// By default, when we call scene.add(), the thing we add will be added to the coordinates (0,0,0). 
 	// This would cause both the camera and the cube to be inside each other. 
 	// To avoid this, we simply move the camera out a bit.
@@ -53,16 +56,28 @@ function init(){
     });
 
 	document.addEventListener("keydown", function onKeyDown (event) {
-
+		
+		// delete cube
 		if (event.which == 68 && selectedCube != null && clickedCube != null) {
-			// delete cube
 			scene.remove(clickedCube);
 			scene.remove(selectedCube);
 			cubes.splice(cubes.indexOf(clickedCube), 1);
 			clickedCube = null;
 			selectedCube = null;
 		}
+		
+		if (event.which == 16){
+			shiftPressed = true;
+			drawSphere();
+		}
 	}, false);
+
+	document.addEventListener("keyup", function onKeyUp (event) {
+		if (event.which == 16){
+			shiftPressed = false;
+			scene.remove(sphere);
+		}
+	});
 
 	document.addEventListener( 'mousemove' ,  onMouseLeftButtonPressed, false );
 
@@ -127,51 +142,45 @@ function onMouseLeftButtonDown ( event ) {
 
 	raycaster.setFromCamera( mouse, camera );
 
-	// First: we need to check wether the new cube will intersect with any cube that is already drawn
-	var intersects = raycaster.intersectObjects( scene.children ); // checks if user clicked on any cube
+	if (!shiftPressed) {
+		// First: we need to check wether the new cube will intersect with any cube that is already drawn
+		var intersects = raycaster.intersectObjects( scene.children ); // checks if user clicked on any cube
 
-	if (intersects.length > 0){
-		for (var i = 0; i < cubes.length; i++){
-			for (var j = 0; j < intersects.length; j++){
-				if (cubes[i] === intersects[j].object){
-					console.log("oi");
-					clickedCube = cubes[i];
+		if (intersects.length > 0){
+			for (var i = 0; i < cubes.length; i++){
+				for (var j = 0; j < intersects.length; j++){
+					if (cubes[i] === intersects[j].object)
+						clickedCube = cubes[i];
 				}
 			}
-		}
-
-		// if (lastClickedCube !== null && clickedCube !== null){	
-		// 	console.log("not null");
-		// 	console.log(clickedCube === lastClickedCube);		
-		// 	if (clickedCube === lastClickedCube){
-		// 		console.log("deleting selected cube");
-		// 		scene.remove(selectedCube);
-		// 		selectedCube = null;
-		// 		clickedCube = null;
-		// 		lastClickedCube = null;				
-		// 	}
-		// }
-	 	
-	 	if (clickedCube !== null)
-		{
-			if (selectedCube === null){
-				console.log("selected cube === null");
-				//Draw lines around selected cube	
-				selectedCube = new THREE.Mesh( new THREE.BoxGeometry(110,110,110,1,1), new THREE.MeshLambertMaterial({color : 0xffffff, transparent :true, opacity: 0.4}));
+		 	
+		 	if (clickedCube !== null)
+			{
+				if (selectedCube === null){
+					//Draw lines around selected cube	
+					selectedCube = new THREE.Mesh( new THREE.BoxGeometry(110,110,110,1,1), new THREE.MeshLambertMaterial({color : 0xffffff, transparent :true, opacity: 0.4}));
+				}
+				else
+					scene.remove(selectedCube);
+		       
+		        selectedCube.position.set(clickedCube.position.x, clickedCube.position.y, clickedCube.position.z);
+		        scene.add(selectedCube);
 			}
-			else {
-				scene.remove(selectedCube);
-			}
-	       
-	        selectedCube.position.set(clickedCube.position.x, clickedCube.position.y, clickedCube.position.z);
-	        scene.add(selectedCube);
-		}
 
-		// Setting current clicked cube as last one to be clicked
-		//lastClickedCube = clickedCube;
+			// Setting current clicked cube as last one to be clicked
+			//lastClickedCube = clickedCube;
+		}
+		else
+			createNewCubes();
 	}
 	else {
-		createNewCubes();
+		// rotate
+
+		// rotate scene
+		if (selectedCube == null)
+			rotateScene();
+
+		// rotate selected cube
 	}
 }
 
@@ -201,4 +210,30 @@ function onMouseLeftButtonPressed (event){
 		scene.add(selectedCube);
 		scene.add(clickedCube);
 	}
+}
+
+function rotateScene(){
+	console.log("rotate scene function");
+
+	// rotate scene
+}
+
+function drawSphere (){
+// add transparent sphere
+
+		// set up the sphere vars
+		var radius = 300,
+    		segments = 80,
+    		rings = 80;
+
+		// create the sphere's material
+		var sphereMaterial = new THREE.MeshLambertMaterial({color : 0xffffff, transparent :true, opacity: 0.1});
+
+		// create a new mesh with
+		// sphere geometry - we will cover
+		// the sphereMaterial next!
+		sphere = new THREE.Mesh( new THREE.SphereGeometry(radius, segments, rings),sphereMaterial);
+
+		// add the sphere to the scene
+		scene.add(sphere);
 }

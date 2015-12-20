@@ -3,3 +3,5 @@ Para selecionar cubo: Basta clicar no cubo
 Para deselecionar cubo: Clicar em qualquer lugar da tela fora do cubo 
 Para deletar cubo: Selecionar cubo e clicar na tecla ‘d’ do teclado
 Para transladar cubo: Estando um cubo selecionado, basta arrasta-lo pela tela.
+Para rotacionar a cena:
+Para rotacionar o cubo:

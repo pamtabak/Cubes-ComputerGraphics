@@ -147,16 +147,18 @@ function createNewCubes(){
 		var material = new THREE.MeshBasicMaterial( { color: Math.random() * 0xff56c0 } ); // selecting cube color
 		cube         = new THREE.Mesh( geometry, material ); // initializing cube
 
-		var intersects = raycaster.intersectObjects(plane);
+		mouse.x = (event.clientX / window.innerWidth) * 2 -1;
+	    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-		var position = new THREE.Vector3((x/window.innerWidth)*2 -1,-(y/window.innerHeight)*2 +1, 0); // creating vector with cube`s coordinates
-		position.unproject( camera ); // projects camera on vector plan
-		
-		var dir            = position.sub(camera.position).normalize();
-	    var distance       = - camera.position.z/dir.z;
-	    var cameraPosition = camera.position.clone().add(dir.multiplyScalar(distance));
+		// Get 3D vector from 3D mouse position using 'unproject' function
+		var vector = new THREE.Vector3(mouse.x, mouse.y, 1);
+		vector.unproject(camera);
 
-		cube.position.set(cameraPosition.x,cameraPosition.y,cameraPosition.z);
+		raycaster.set( camera.position, vector.sub( camera.position ).normalize() );
+
+		var intersects = raycaster.intersectObjects(scene.children);
+
+	 	cube.position.copy(intersects[0].point);
 		scene.add( cube ); 
 
 		cubes.push(cube);

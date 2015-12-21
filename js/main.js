@@ -71,7 +71,7 @@ function init(){
 		if (selectedCube == null) {
 			controls.enabled = true;
 		}
-
+		
         //change global variables for object selection
         mousePressed = false;
     });
@@ -188,14 +188,17 @@ function onMouseLeftButtonDown ( event ) {
 			// disable orbit controls
 			controls.enabled = false;
 
+			
+			if (clickedCube != null && selectedCube == null){
+				// calculate offset
+				var intersects = raycaster.intersectObject(plane);
+				offset.copy(intersects[0].point).sub(plane.position);
+				console.log(offset);
+			}
+		 	
 			// set the clicked cube
 			clickedCube = intersects[0].object;
-
-			// calculate offset
-			var intersects2 = raycaster.intersectObject(plane);
-    		offset.copy(intersects[0].point).sub(plane.position);
-    		console.log(offset);
-		 	
+			
 		 	if (clickedCube !== null)
 			{
 				if (selectedCube === null){
@@ -245,7 +248,7 @@ function onMouseLeftButtonPressed (event){
 			// Update position of the plane if need
     		var intersects = raycaster.intersectObjects(scene.children);
     		if (intersects.length > 0) {
-    			console.log("AQUI");
+    			//console.log("AQUI");
       			plane.position.copy(intersects[0].object.position);
       			plane.lookAt(camera.position);
 			}

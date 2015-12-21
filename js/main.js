@@ -1,3 +1,4 @@
+// global objects
 var scene, camera, renderer;
 var cube;
 var raycaster;
@@ -13,6 +14,11 @@ var sphere; // transparente sphere that appears when Shift is being pressed
 var plane = null; // to find an offset of dragging, we will use an invisible ‘helper’ – plane
 var clock = null;
 var offset = new THREE.Vector3();
+var previousMousePosition = {
+    x: 0,
+    y: 0
+}; // array used to check previous mouse position when handling cube rotation
+
 
 init();
 animate();
@@ -50,6 +56,8 @@ function init(){
 	var material = new THREE.MeshLambertMaterial( { color: 0xff56c0 } );
 	cube = new THREE.Mesh( geometry, material );
 	
+	cubes.push(cube);
+
 	scene.add( cube ); 
 
 	// Plane, that helps to determinate an intersection position
@@ -61,8 +69,6 @@ function init(){
 	// This would cause both the camera and the cube to be inside each other. 
 	// To avoid this, we simply move the camera out a bit.
 	camera.position.z = 1000;
-
-	cubes.push(cube);
 
 	document.addEventListener( 'mousedown' , onMouseLeftButtonDown, false );
 
@@ -137,7 +143,6 @@ function createNewCubes(){
 	    var y = event.clientY;
 
 		// drawing a new cube
-		console.log("drawing new cube");
 		var geometry = new THREE.BoxGeometry( 100, 100, 100 ); // object that contains all the points (vertices) and fill (faces) of the cube. 
 		var material = new THREE.MeshBasicMaterial( { color: Math.random() * 0xff56c0 } ); // selecting cube color
 		cube         = new THREE.Mesh( geometry, material ); // initializing cube
@@ -188,12 +193,10 @@ function onMouseLeftButtonDown ( event ) {
 			// disable orbit controls
 			controls.enabled = false;
 
-			
 			if (clickedCube != null && selectedCube == null){
 				// calculate offset
 				var intersects = raycaster.intersectObject(plane);
 				offset.copy(intersects[0].point).sub(plane.position);
-				console.log(offset);
 			}
 		 	
 			// set the clicked cube
@@ -208,7 +211,10 @@ function onMouseLeftButtonDown ( event ) {
 				else
 					scene.remove(selectedCube);
 		       
-		        selectedCube.position.set(clickedCube.position.x, clickedCube.position.y, clickedCube.position.z);
+		        selectedCube.position.copy(clickedCube.position);
+		        selectedCube.rotation.x = clickedCube.rotation.x;
+		        selectedCube.rotation.y = clickedCube.rotation.y;
+		        selectedCube.rotation.z = clickedCube.rotation.z;
 		        scene.add(selectedCube);
 			}
 		}
@@ -226,41 +232,60 @@ function onMouseLeftButtonPressed (event){
 		mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-        // raycaster.setFromCamera( mouse, camera );
-
         var position = new THREE.Vector3(mouse.x, mouse.y, 1);
 		position.unproject( camera ); // projects camera on vector plan
 		
-		// var dir            = position.sub(camera.position).normalize();
-		// var distance       = - camera.position.z/dir.z;
-		// var cameraPosition = camera.position.clone().add(dir.multiplyScalar(distance));
 		raycaster.set( camera.position, position.sub(camera.position).normalize() );
 
 		if (clickedCube != null && selectedCube != null && shiftPressed == false){
 			// Check the position where the plane is intersected
 		    var intersects = raycaster.intersectObject(plane);
 		    
-	    	// Reposition the object based on the intersection point with the plane
-    		clickedCube.position.copy(intersects[0].point.sub(offset));
-    		selectedCube.position.copy(clickedCube.position);
+		    if (intersects.length > 0){
+		    	// Reposition the object based on the intersection point with the plane
+    			clickedCube.position.copy(intersects[0].point.sub(offset));
+    			selectedCube.position.copy(clickedCube.position);
+    			selectedCube.rotation.x = clickedCube.rotation.x;
+		        selectedCube.rotation.y = clickedCube.rotation.y;
+		        selectedCube.rotation.z = clickedCube.rotation.z;
+		    }
 		}
 		else {
 			// Update position of the plane if need
     		var intersects = raycaster.intersectObjects(scene.children);
     		if (intersects.length > 0) {
-    			//console.log("AQUI");
       			plane.position.copy(intersects[0].object.position);
       			plane.lookAt(camera.position);
 			}
-		}
-
-  //       clickedCube.position.set(cameraPosition.x,cameraPosition.y, cameraPosition.z);
-		// selectedCube.position.set(cameraPosition.x,cameraPosition.y, cameraPosition.z);
+		}	
 	}
+
+	// rotate selected cube
+	if (shiftPressed && mousePressed && clickedCube != null && selectedCube != null)
+		rotateCube();
 }
 
+function rotateCube(){
+	 var deltaMove = {
+        x: event.offsetX-previousMousePosition.x,
+        y: event.offsetY-previousMousePosition.y
+    };
+
+    var deltaRotationQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(
+            toRadians(deltaMove.y * 1),toRadians(deltaMove.x * 1),0,'XYZ'));
+    
+    clickedCube.quaternion.multiplyQuaternions(deltaRotationQuaternion, clickedCube.quaternion);
+    
+    selectedCube.quaternion.multiplyQuaternions(deltaRotationQuaternion, selectedCube.quaternion);
+    selectedCube.rotation.x = clickedCube.rotation.x;
+	selectedCube.rotation.y = clickedCube.rotation.y;
+    selectedCube.rotation.z = clickedCube.rotation.z;
+
+    previousMousePosition = { x: event.offsetX, y: event.offsetY };
+}
+
+// add transparent sphere 
 function drawSphere (){
-	// add transparent sphere
 
 	// create the sphere's material
 	var sphereMaterial = new THREE.MeshLambertMaterial({color : 0xffffff, transparent :true, opacity: 0.1});
@@ -288,4 +313,12 @@ function drawSphere (){
 
 	// add the sphere to the scene
 	scene.add(sphere);
+}
+
+function toRadians(angle) {
+	return angle * (Math.PI / 180);
+}
+
+function toDegrees(angle) {
+	return angle * (180 / Math.PI);
 }

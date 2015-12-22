@@ -10,7 +10,7 @@ var selectedCube = null; // selection cube (shows which cube is selected) - the 
 var clickedCube = null; // cube, from the screen, that is selected
 var mousePressed = false; // boolean to see if mouse is pressed
 var shiftPressed = false; // boolean to see if shift key is being pressed
-var sphere; // transparente sphere that appears when Shift is being pressed
+var sphere = null; // transparente sphere that appears when Shift is being pressed
 var plane = null; // to find an offset of dragging, we will use an invisible ‘helper’ – plane
 var clock = null;
 var offset = new THREE.Vector3();
@@ -96,7 +96,9 @@ function init(){
 		if (event.which == 16){
 			shiftPressed = true;
 			controls.shiftPressed = true;
-			drawSphere();
+			if (sphere == null) {
+				drawSphere();
+			}
 		}
 	}, false);
 
@@ -105,6 +107,7 @@ function init(){
 			shiftPressed = false;
 			controls.shiftPressed = false;
 			scene.remove(sphere);
+			sphere = null;
 		}
 	});
 

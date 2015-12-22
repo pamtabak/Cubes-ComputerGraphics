@@ -25,12 +25,13 @@ animate();
 
 function init(){
  	scene = new THREE.Scene(); // set up the scene
+ 	scene.fog = new THREE.FogExp2(0xffffff, 0.0003);
 
  	camera = new THREE.PerspectiveCamera (45, window.innerWidth/window.innerHeight, 1, 10000);
  	
  	// Set up the rendered
- 	renderer = new THREE.WebGLRenderer();
- 	renderer.setClearColor(0xeeeeee);
+ 	renderer = new THREE.WebGLRenderer({antialias:true, alpha: false});
+ 	renderer.setClearColor(scene.fog.color);
 	renderer.setSize(window.innerWidth, window.innerHeight); // set the size at which we want it to render our app
 	document.body.appendChild(renderer.domElement);
 	
@@ -45,7 +46,7 @@ function init(){
 
  	// Ilumination
  	scene.add(new THREE.AmbientLight(0x44444));
- 	var light = new THREE.DirectionalLight( 0xffffff, 1 );
+ 	var light = new THREE.DirectionalLight( 0xffffff );
 	light.position.set( 200, 200, 1000 ).normalize();
 	// scene.add( light );
 	camera.add(light);
@@ -55,7 +56,6 @@ function init(){
 	var geometry = new THREE.BoxGeometry( 100, 100, 100 ); // object that contains all the points (vertices) and fill (faces) of the cube. 
 	var material = new THREE.MeshLambertMaterial( { color: 0xff56c0 } );
 	cube = new THREE.Mesh( geometry, material );
-	
 	cubes.push(cube);
 
 	scene.add( cube ); 
@@ -142,8 +142,8 @@ function createNewCubes(){
 	
 	if (selectedCube == null){
 		var event = window.event;
-	    var x = event.clientX;
-	    var y = event.clientY;
+	    var x     = event.clientX;
+	    var y     = event.clientY;
 
 		// drawing a new cube
 		var geometry = new THREE.BoxGeometry( 100, 100, 100 ); // object that contains all the points (vertices) and fill (faces) of the cube. 
@@ -211,7 +211,7 @@ function onMouseLeftButtonDown ( event ) {
 			{
 				if (selectedCube === null){
 					//Draw lines around clicked cube	
-					selectedCube = new THREE.Mesh( new THREE.BoxGeometry(110,110,110,1,1), new THREE.MeshLambertMaterial({color : 0xffffff, transparent :true, opacity: 0.4}));
+					selectedCube = new THREE.Mesh( new THREE.BoxGeometry(110,110,110,1,1), new THREE.MeshLambertMaterial({color : 0xffffff, wireframe: true}));
 				}
 				else
 					scene.remove(selectedCube);
@@ -266,15 +266,20 @@ function onMouseLeftButtonPressed (event){
 	}
 
 	// rotate selected cube
-	if (shiftPressed && mousePressed && clickedCube != null && selectedCube != null)
-		rotateCube();
+	if (shiftPressed && clickedCube != null && selectedCube != null)
+	{	
+		if (mousePressed)
+			rotateCube();
+
+		previousMousePosition = { x: event.offsetX, y: event.offsetY };
+	}
 }
 
 function rotateCube(){
 	 var deltaMove = {
         x: event.offsetX-previousMousePosition.x,
         y: event.offsetY-previousMousePosition.y
-    };
+     };
 
     var deltaRotationQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(
             toRadians(deltaMove.y * 1),toRadians(deltaMove.x * 1),0,'XYZ'));
@@ -286,7 +291,7 @@ function rotateCube(){
 	selectedCube.rotation.y = clickedCube.rotation.y;
     selectedCube.rotation.z = clickedCube.rotation.z;
 
-    previousMousePosition = { x: event.offsetX, y: event.offsetY };
+    // previousMousePosition = { x: event.offsetX, y: event.offsetY };
 }
 
 // add transparent sphere 
